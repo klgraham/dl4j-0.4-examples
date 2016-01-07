@@ -36,7 +36,7 @@ public class FunctionApproximationExample
 //		                     1500, 2000, 2500, 3000, 3500, 4000, 5000,
 //		                     7500, 10000, 15000, 25000, 50000, 75000, 100000};
 
-		StringBuilder sb = new StringBuilder();
+		StringBuilder sb = new StringBuilder("# numHiddenNodes,iterations,learningRate,error");
 
 		for (float learningRate = 1e-3f; learningRate <= 1f; learningRate *= 10f) {
 			for (int iterations = 100; iterations <= 1000; iterations += 100) {
@@ -46,7 +46,7 @@ public class FunctionApproximationExample
 							.iterations(iterations) // # training iterations predict/classify & backprop
 							.learningRate(learningRate) // Optimization step size
 							.optimizationAlgo(OptimizationAlgorithm.LINE_GRADIENT_DESCENT) // Backprop method (calculate the gradients)
-//							.l1(2e-4).regularization(true)
+							.l2(2e-4).regularization(true)
 							.list(2) // # NN layers (does not count input layer)
 							.layer(0, new DenseLayer.Builder()
 									.nIn(numInputs)
