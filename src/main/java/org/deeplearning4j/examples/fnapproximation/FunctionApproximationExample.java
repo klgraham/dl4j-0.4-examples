@@ -22,56 +22,64 @@ public class FunctionApproximationExample
 		int numInputs = 1;
 		int numOutputs = 1;
 		int nSamples = 10;
-		int iterations = 200;
+//		int iterations = 500;
 //        int numHiddenNodes = 1000;
 		int seed = 123;
-		float learningRate = 1e-3f;
+//		float learningRate = 1e-2f;
 
 		INDArray x = Nd4j.linspace(1, nSamples, nSamples).reshape(nSamples, 1);
 		INDArray y = x.mul(x);
 		DataSet dataSet = new DataSet(x, y);
 
-		int[] hiddenNodes = {20, 50, 75, 100, 200, 500, 750, 1000,
-		                     1500, 2000, 2500, 3000, 3500, 4000, 5000,
-		                     7500, 10000, 15000, 25000, 50000, 75000, 100000};
+
+		int[] hiddenNodes = {20, 50, 75, 100, 200, 500, 750, 1000};//,
+//		                     1500, 2000, 2500, 3000, 3500, 4000, 5000,
+//		                     7500, 10000, 15000, 25000, 50000, 75000, 100000};
 
 		StringBuilder sb = new StringBuilder();
-		for (int numHiddenNodes : hiddenNodes)
-		{
-			MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-					.seed(seed) // Seed to lock in weight initialization for tuning
-					.iterations(iterations) // # training iterations predict/classify & backprop
-					.learningRate(learningRate) // Optimization step size
-					.optimizationAlgo(OptimizationAlgorithm.LINE_GRADIENT_DESCENT) // Backprop method (calculate the gradients)
-					.l2(2e-4).regularization(true)
-					.list(2) // # NN layers (does not count input layer)
-					.layer(0, new DenseLayer.Builder()
-							.nIn(numInputs)
-							.nOut(numHiddenNodes)
-							.weightInit(WeightInit.XAVIER)
-							.activation("tanh")
-							.build())
-					.layer(1, new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
-							.nIn(numHiddenNodes)
-							.nOut(numOutputs) // # output nodes
-							.activation("identity")
-							.weightInit(WeightInit.XAVIER)
-							.build())
-					.backprop(true)
-					.build();
 
-			MultiLayerNetwork network = new MultiLayerNetwork(conf);
-			network.init();
-//            network.setListeners(new ScoreIterationListener(10));
-			dataSet.normalize();
-			network.fit(dataSet);
+		for (float learningRate = 1e-3f; learningRate <= 1f; learningRate *= 10f) {
+			for (int iterations = 100; iterations <= 1000; iterations += 100) {
+				for (int numHiddenNodes : hiddenNodes) {
+					MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+							.seed(seed) // Seed to lock in weight initialization for tuning
+							.iterations(iterations) // # training iterations predict/classify & backprop
+							.learningRate(learningRate) // Optimization step size
+							.optimizationAlgo(OptimizationAlgorithm.LINE_GRADIENT_DESCENT) // Backprop method (calculate the gradients)
+//							.l1(2e-4).regularization(true)
+							.list(2) // # NN layers (does not count input layer)
+							.layer(0, new DenseLayer.Builder()
+									.nIn(numInputs)
+									.nOut(numHiddenNodes)
+									.weightInit(WeightInit.XAVIER)
+									.activation("tanh")
+									.build())
+							.layer(1, new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
+									.nIn(numHiddenNodes)
+									.nOut(numOutputs) // # output nodes
+									.activation("identity")
+									.weightInit(WeightInit.XAVIER)
+									.build())
+							.backprop(true)
+							.build();
 
-			INDArray yEstimate = network.output(x);
-			INDArray error = Nd4j.std(y.sub(yEstimate));
+					MultiLayerNetwork network = new MultiLayerNetwork(conf);
+					network.init();
+					//            network.setListeners(new ScoreIterationListener(10));
+					dataSet.normalize();
+					network.fit(dataSet);
 
-			sb.append(numHiddenNodes + "," + error);
-			System.out.println(numHiddenNodes + "," + error);
-			sb.append("\n");
+					INDArray yEstimate = network.output(x);
+					INDArray error = Nd4j.std(y.sub(yEstimate));
+
+					sb.append(numHiddenNodes + ",");
+					sb.append(iterations + ",");
+					sb.append(learningRate + ",");
+					sb.append(error);
+					sb.append("\n");
+					System.out.println(numHiddenNodes + "," + error);
+				}
+			}
 		}
 		System.out.println("*****************");
 		System.out.println(sb.toString());
