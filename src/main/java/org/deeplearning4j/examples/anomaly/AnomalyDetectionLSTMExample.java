@@ -45,9 +45,9 @@ public class AnomalyDetectionLSTMExample
 		int inputLayerSize = 1;                     //Number of units in the input layer
 		int outputLayerSize = 2;                    //Number of units in the output layer = number of predictions for each input
 		int lstmLayerSize = 10;					    //Number of units in each GravesLSTM layer
-		int numIterations = 2500;
+		int numIterations = 4001;
 
-		int nSamples = 20;
+		int nSamples = 10;
 
 		double[] xx = new double[nSamples];
 		double[] xx1 = new double[nSamples+1];
@@ -60,37 +60,37 @@ public class AnomalyDetectionLSTMExample
 		}
 		xx1[nSamples] = a * (double)nSamples;
 		for (int i = 0; i < 2*nSamples; i += 2) {
-			yy[i] = Math.sin(xx1[i/2]);
-			yy[i+1] = Math.sin(xx1[i/2 + 1]);
+			yy[i] = f(xx1[i/2]);
+			yy[i+1] = f(xx1[i/2 + 1]);
 		}
 
 		INDArray x = Nd4j.create(xx).reshape(nSamples,1);
 		INDArray y = Nd4j.create(yy).reshape(nSamples,outputLayerSize);
 		DataSet data = new DataSet(x, y);
-		System.out.println("x: \n" + x);
+//		System.out.println("x: \n" + x);
 //		System.out.println("y: \n" + y);
 
 		//Set up network configuration:
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 				.optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
 				.iterations(numIterations)
-				.learningRate(0.05)
+				.learningRate(0.1)
 //			.rmsDecay(0.95)
 				.seed(12345)
-				.regularization(true)
-//				.l1(0.001)
+//				.regularization(true)
+//				.l2(0.001)
 				.list(3)
 				.layer(0, new GravesLSTM.Builder().nIn(inputLayerSize).nOut(lstmLayerSize)
-					.updater(Updater.RMSPROP)
+					.updater(Updater.ADAGRAD)
 					.activation("tanh").weightInit(WeightInit.DISTRIBUTION)
 					.dist(new UniformDistribution(-0.08, 0.08)).build())
 				.layer(1, new GravesLSTM.Builder().nIn(lstmLayerSize).nOut(lstmLayerSize)
-					.updater(Updater.RMSPROP)
+					.updater(Updater.ADAGRAD)
 					.activation("tanh").weightInit(WeightInit.DISTRIBUTION)
 					.dist(new UniformDistribution(-0.08, 0.08)).build())
 				.layer(2, new RnnOutputLayer.Builder(LossFunction.MSE).activation("sigmoid")
 //			.layer(2, new RnnOutputLayer.Builder(LossFunction.MSE).activation("softmax")
-			         .updater(Updater.RMSPROP).nIn(lstmLayerSize).nOut(outputLayerSize)
+			         .updater(Updater.ADAGRAD).nIn(lstmLayerSize).nOut(outputLayerSize)
 			         .weightInit(WeightInit.DISTRIBUTION)
 	                 .dist(new UniformDistribution(-0.08, 0.08)).build())
 				.pretrain(false).backprop(true)
@@ -98,7 +98,7 @@ public class AnomalyDetectionLSTMExample
 		
 		MultiLayerNetwork net = new MultiLayerNetwork(conf);
 		net.init();
-		data.normalize();
+//		data.normalize();
 		net.setListeners(new ScoreIterationListener(100));
 		
 		//Print the  number of parameters in the network (and for each layer)
@@ -123,10 +123,15 @@ public class AnomalyDetectionLSTMExample
 //		for (int i = 0; i < nSamples; i++) {
 //			xxShift[i] = xx[i] + 0.05;
 //		}
-//		INDArray x1 = Nd4j.create(xxShift).reshape(nSamples,1);
-//		INDArray y1 = net.output(x1);
-//		System.out.println("x1: " + x1);
-//		System.out.println("y1: " + y1);
+		INDArray x1 = Nd4j.create(new double[]{1, 0.5}).reshape(2,1);
+		INDArray y1 = net.output(x1);
+		System.out.println("x1: " + x1);
+		System.out.println("y1: " + y1);
+	}
+
+	static double f(double x) {
+//		return x * x;
+		return Math.sin(x);
 	}
 
 
