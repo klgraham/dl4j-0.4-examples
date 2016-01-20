@@ -1,4 +1,4 @@
-package org.deeplearning4j.examples.anomaly;
+package org.deeplearning4j.examples.fnapproximation;
 
 import org.deeplearning4j.nn.api.Layer;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
@@ -20,7 +20,7 @@ import org.nd4j.linalg.ops.transforms.Transforms;
 /**
  * This is a function approximation example. A better one than my first attempt.
  */
-public class AnomalyDetectionLSTMExample
+public class FunctionApproxWithLSTMExample
 {
 	public static void main( String[] args ) throws Exception {
 		int inputLayerSize = 1;                     //Number of units in the input layer
